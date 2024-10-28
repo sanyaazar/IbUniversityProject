@@ -80,13 +80,51 @@
             }
           });
 
-        document.getElementById('signIn').addEventListener('click', () => {
-          ipcRenderer.send('open-sign-in');
-        });
+        document
+          .getElementById('signIn')
+          .addEventListener('click', async () => {
+            try {
+              const response = await axios.get(
+                'http://localhost:3000/auth/login',
+              );
+              if (response.status === 200) {
+                ipcRenderer.send('open-sign-in');
+              }
+            } catch (error) {
+              if (error.response && error.response.status === 401) {
+                new Notification('Ошибка входа', {
+                  body: 'ПК не подтвержден. Вход невозможен.',
+                });
+              } else {
+                console.error('Ошибка при попытке входа:', error);
+                document.getElementById('result').innerText =
+                  'Произошла ошибка при попытке входа';
+              }
+            }
+          });
 
-        document.getElementById('signUp').addEventListener('click', () => {
-          ipcRenderer.send('open-sign-up');
-        });
+        document
+          .getElementById('signUp')
+          .addEventListener('click', async () => {
+            try {
+              const response = await axios.get(
+                'http://localhost:3000/auth/signup',
+              );
+              if (response.status === 200) {
+                ipcRenderer.send('open-sign-up');
+              }
+            } catch (error) {
+              if (error.response && error.response.status === 401) {
+                new Notification('Ошибка входа', {
+                  body: 'ПК не подтвержден. Вход невозможен.',
+                });
+              } else {
+                console.error('Ошибка при попытке входа:', error);
+                document.getElementById('result').innerText =
+                  'Произошла ошибка при попытке входа';
+              }
+            }
+          });
       });
     </script>
   </body>

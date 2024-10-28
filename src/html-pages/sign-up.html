@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Electron App - Sign Up</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f4f4f4;
+      }
+      h1 {
+        margin-bottom: 20px;
+      }
+      .action-buttons {
+        display: flex;
+        flex-direction: column;
+        width: 300px;
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      input {
+        padding: 10px;
+        font-size: 16px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        width: calc(100% - 22px);
+      }
+      button {
+        padding: 10px;
+        font-size: 16px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-bottom: 10px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Регистрация</h1>
+    <div class="action-buttons">
+      <input type="text" id="username" placeholder="Логин" />
+      <input type="password" id="password" placeholder="Пароль" />
+      <input type="text" id="fullName" placeholder="ФИО" />
+      <input type="tel" id="phone" placeholder="Номер телефона" />
+      <input type="email" id="email" placeholder="Email" />
+      <input type="text" id="address" placeholder="Адрес" />
+      <button id="signUpButton">Sign Up</button>
+      <button id="backButton">Back</button>
+    </div>
+
+    <script>
+      const { ipcRenderer } = require('electron');
+
+      document.getElementById('signUpButton').addEventListener('click', () => {
+        const userData = {
+          username: document.getElementById('username').value,
+          password: document.getElementById('password').value,
+          fullName: document.getElementById('fullName').value,
+          phone: document.getElementById('phone').value,
+          email: document.getElementById('email').value,
+          address: document.getElementById('address').value,
+        };
+        ipcRenderer.send('sign-up', userData);
+      });
+
+      document.getElementById('backButton').addEventListener('click', () => {
+        ipcRenderer.send('open-main-page');
+      });
+    </script>
+  </body>
+</html>

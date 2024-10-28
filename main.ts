@@ -1,7 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { exec } from 'child_process';
-import axios from 'axios';
-import { getWmicUUID } from './getuuid';
 
 let serverProcess;
 
@@ -18,15 +16,19 @@ function createWindow() {
   win.loadURL('http://localhost:3000/auth');
 }
 
-ipcMain.on('login', async (event, data) => {
-  try {
-    const response = await axios.post('http://localhost:3000/auth/login', data);
-    console.log(response.data);
-    event.reply('login-response', response.data);
-  } catch (error) {
-    console.error('Login error:', error.body);
-    event.reply('login-response', { error: 'Login failed' });
-  }
+ipcMain.on('open-sign-in', () => {
+  const mainWindow = BrowserWindow.getAllWindows()[0];
+  mainWindow.loadURL('http://localhost:3000/auth/login');
+});
+
+ipcMain.on('open-main-page', () => {
+  const mainWindow = BrowserWindow.getAllWindows()[0];
+  mainWindow.loadURL('http://localhost:3000/auth');
+});
+
+ipcMain.on('open-sign-up', () => {
+  const mainWindow = BrowserWindow.getAllWindows()[0];
+  mainWindow.loadURL('http://localhost:3000/auth/signup');
 });
 
 app.whenReady().then(async () => {

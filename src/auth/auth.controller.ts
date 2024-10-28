@@ -4,16 +4,44 @@ import { Response } from 'express';
 import { LoginDTO } from './dto/login-body.dto';
 
 import { AuthService } from './auth.service';
+import { PcKeyService } from 'src/pc-key/pc-key.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly pcKeyService: PcKeyService,
+  ) {}
 
   @Get()
   getAuthConfirmationPage(@Res() res: Response) {
     res.sendFile(
       'D:\\Универ\\university-ib-project\\src\\html-pages\\menu.html',
     );
+  }
+
+  @Get('login')
+  async getLoginPage(@Res() res: Response) {
+    const check = this.pcKeyService.isKeyChecked();
+    if (check)
+      res.sendFile(
+        'D:\\Универ\\university-ib-project\\src\\html-pages\\login.html',
+      );
+    else {
+      res.sendStatus(401);
+    }
+  }
+
+  @Get('signup')
+  async getSignUpPage(@Res() res: Response) {
+    const check = this.pcKeyService.isKeyChecked();
+    if (check)
+      res.sendFile(
+        'D:\\Универ\\university-ib-project\\src\\html-pages\\sign-up.html',
+      );
+    else {
+      res.sendStatus(401);
+    }
   }
 
   @Post('login')
