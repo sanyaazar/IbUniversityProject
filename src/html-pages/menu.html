@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Electron App - Actions</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f4f4f4;
+      }
+      h1 {
+        margin-bottom: 20px;
+      }
+      .action-buttons {
+        display: flex;
+        flex-direction: column;
+        width: 300px;
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      button {
+        padding: 10px;
+        font-size: 16px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-bottom: 10px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>IB University Program</h1>
+    <div class="action-buttons">
+      <button id="checkKeyFeature">Check the Key Feature</button>
+      <button id="signIn">Sign In</button>
+      <button id="signUp">Sign Up</button>
+    </div>
+
+    <script>
+      const { ipcRenderer } = require('electron');
+
+      document
+        .getElementById('checkKeyFeature')
+        .addEventListener('click', () => {
+          ipcRenderer.send('check-key-feature');
+        });
+
+      document.getElementById('signIn').addEventListener('click', () => {
+        ipcRenderer.send('open-sign-in');
+      });
+
+      document.getElementById('signUp').addEventListener('click', () => {
+        ipcRenderer.send('open-sign-up');
+      });
+    </script>
+  </body>
+</html>
