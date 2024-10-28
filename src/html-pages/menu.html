@@ -40,6 +40,10 @@
       button:hover {
         background-color: #0056b3;
       }
+      #result {
+        margin-top: 20px;
+        font-size: 18px;
+      }
     </style>
   </head>
   <body>
@@ -49,22 +53,40 @@
       <button id="signIn">Sign In</button>
       <button id="signUp">Sign Up</button>
     </div>
+    <div id="result"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
       const { ipcRenderer } = require('electron');
+      const axios = require('axios');
 
-      document
-        .getElementById('checkKeyFeature')
-        .addEventListener('click', () => {
-          ipcRenderer.send('check-key-feature');
+      document.addEventListener('DOMContentLoaded', () => {
+        document
+          .getElementById('checkKeyFeature')
+          .addEventListener('click', async () => {
+            try {
+              const response = await axios.get(
+                'http://localhost:3000/pc-key/checkSecretKey',
+              );
+              new Notification('Результат проверки ключа', {
+                body: response.data
+                  ? 'ПК подтвержден'
+                  : 'Ключ ПК не подтвержден',
+              });
+            } catch (error) {
+              console.error('Ошибка при проверке ключа:', error);
+              document.getElementById('result').innerText =
+                'Произошла ошибка при проверке ключа';
+            }
+          });
+
+        document.getElementById('signIn').addEventListener('click', () => {
+          ipcRenderer.send('open-sign-in');
         });
 
-      document.getElementById('signIn').addEventListener('click', () => {
-        ipcRenderer.send('open-sign-in');
-      });
-
-      document.getElementById('signUp').addEventListener('click', () => {
-        ipcRenderer.send('open-sign-up');
+        document.getElementById('signUp').addEventListener('click', () => {
+          ipcRenderer.send('open-sign-up');
+        });
       });
     </script>
   </body>

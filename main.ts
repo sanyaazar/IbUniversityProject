@@ -30,9 +30,6 @@ ipcMain.on('login', async (event, data) => {
 });
 
 app.whenReady().then(async () => {
-  const uuid = await getWmicUUID();
-  console.log(uuid);
-
   serverProcess = exec('npm run start', (err) => {
     if (err) {
       console.error('Failed to start NestJS server:', err);

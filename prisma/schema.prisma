@@ -14,7 +14,9 @@ datasource db {
 }
 
 model SecretKey {
-  WmicUUID String @unique
+  pcId String @id @default(uuid()) @db.Uuid
+  PcName String
+  WmicUUID String
 }
 
 model User {

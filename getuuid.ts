@@ -1,6 +1,6 @@
 import { exec } from 'child_process';
 
-export function getWmicUUID() {
+export function getWmicUUID(): Promise<string> {
   return new Promise((resolve, reject) => {
     exec('wmic csproduct get UUID', (error, stdout, stderr) => {
       if (error) {
