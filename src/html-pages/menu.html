@@ -55,7 +55,6 @@
     </div>
     <div id="result"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
       const { ipcRenderer } = require('electron');
       const axios = require('axios');
@@ -68,15 +67,13 @@
               const response = await axios.get(
                 'http://localhost:3000/pc-key/checkSecretKey',
               );
-              new Notification('Результат проверки ключа', {
-                body: response.data
-                  ? 'ПК подтвержден'
-                  : 'Ключ ПК не подтвержден',
+              new Notification('Key Check Result', {
+                body: response.data ? 'PC verified' : 'PC key not verified',
               });
             } catch (error) {
-              console.error('Ошибка при проверке ключа:', error);
+              console.error('Error checking the key:', error);
               document.getElementById('result').innerText =
-                'Произошла ошибка при проверке ключа';
+                'An error occurred while checking the key';
             }
           });
 
@@ -92,13 +89,13 @@
               }
             } catch (error) {
               if (error.response && error.response.status === 401) {
-                new Notification('Ошибка входа', {
-                  body: 'ПК не подтвержден. Вход невозможен.',
+                new Notification('Login Error', {
+                  body: 'PC not verified. Unable to sign in.',
                 });
               } else {
-                console.error('Ошибка при попытке входа:', error);
+                console.error('Error attempting to sign in:', error);
                 document.getElementById('result').innerText =
-                  'Произошла ошибка при попытке входа';
+                  'An error occurred while attempting to sign in';
               }
             }
           });
@@ -115,13 +112,13 @@
               }
             } catch (error) {
               if (error.response && error.response.status === 401) {
-                new Notification('Ошибка входа', {
-                  body: 'ПК не подтвержден. Вход невозможен.',
+                new Notification('Sign Up Error', {
+                  body: 'PC not verified. Unable to sign up.',
                 });
               } else {
-                console.error('Ошибка при попытке входа:', error);
+                console.error('Error attempting to sign up:', error);
                 document.getElementById('result').innerText =
-                  'Произошла ошибка при попытке входа';
+                  'An error occurred while attempting to sign up';
               }
             }
           });

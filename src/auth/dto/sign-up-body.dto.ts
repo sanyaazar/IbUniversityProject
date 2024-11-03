@@ -4,25 +4,26 @@ import {
   IsEmail,
   IsPhoneNumber,
   IsStrongPassword,
+  Length,
 } from 'class-validator';
 
 export class SignUpDTO {
   @IsString()
-  @IsNotEmpty()
+  @Length(4, 25)
   username: string;
 
   @IsStrongPassword({
-    minLength: 1,
+    minLength: 6,
     minLowercase: 1,
     minNumbers: 1,
     minUppercase: 1,
-    minSymbols: 0,
+    minSymbols: 1,
   })
-  @IsNotEmpty()
+  @Length(6, 25)
   password: string;
 
   @IsString()
-  @IsNotEmpty()
+  @Length(1, 50)
   fullName: string;
 
   @IsPhoneNumber()
@@ -34,6 +35,6 @@ export class SignUpDTO {
   email: string;
 
   @IsString()
-  @IsNotEmpty()
+  @Length(1, 50)
   address: string;
 }

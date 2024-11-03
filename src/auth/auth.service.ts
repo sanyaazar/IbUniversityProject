@@ -11,6 +11,8 @@ import { UserRepository } from 'src/database/user.repository';
 
 @Injectable()
 export class AuthService {
+  private failedAttempts = 0;
+
   constructor(
     private readonly hasher: Hasher,
     private readonly authRepository: AuthRepository,
@@ -18,19 +20,18 @@ export class AuthService {
     private readonly userRepository: UserRepository,
   ) {}
 
-  async login(body: LoginDTO): Promise<boolean> {
+  async login(body: LoginDTO): Promise<boolean | number> {
     const isKeyChecked = this.pcKeyService.isKeyChecked();
     if (!isKeyChecked) return false;
 
     const existedUser = await this.userRepository.getUserByLogin(body.username);
-    if (!existedUser)
-      throw new UnauthorizedException('Invalid login or password');
-    const isValidPassword = await this.hasher.compare(
-      body.password,
-      existedUser.password,
-    );
-    if (!isValidPassword)
-      throw new UnauthorizedException('Invalid login or password');
+    if (!existedUser) {
+      throw new UnauthorizedException('Invalid username or password');
+    }
+
+    if (!(body.password === existedUser.password)) {
+      throw new UnauthorizedException('Invalid username or password');
+    }
     return true;
   }
 
@@ -39,7 +40,6 @@ export class AuthService {
     if (!isKeyChecked) return false;
 
     await this.checkUniqueFields(body);
-    body.password = await this.hasher.hash(body.password);
     const createdUser = await this.userRepository.createUser(body);
     return createdUser ? true : false;
   }
@@ -69,5 +69,9 @@ export class AuthService {
     if (existing) {
       throw new ConflictException(`User with such phone number already exists`);
     }
+  }
+
+  getFailedAttempts(): number {
+    return this.failedAttempts;
   }
 }

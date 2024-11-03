@@ -51,14 +51,14 @@
     </style>
   </head>
   <body>
-    <h1>Регистрация</h1>
+    <h1>Sign Up</h1>
     <div class="action-buttons">
-      <input type="text" id="username" placeholder="Логин" />
-      <input type="password" id="password" placeholder="Пароль" />
-      <input type="text" id="fullName" placeholder="ФИО" />
-      <input type="tel" id="phone" placeholder="Номер телефона" />
+      <input type="text" id="username" placeholder="Username" />
+      <input type="password" id="password" placeholder="Password" />
+      <input type="text" id="fullName" placeholder="Full Name" />
+      <input type="tel" id="phone" placeholder="Phone Number" />
       <input type="email" id="email" placeholder="Email" />
-      <input type="text" id="address" placeholder="Адрес" />
+      <input type="text" id="address" placeholder="Address" />
       <button id="signUpButton">Sign Up</button>
       <button id="backButton">Back</button>
     </div>
@@ -87,14 +87,14 @@
         });
 
         if (response.error) {
-          new Notification('Ошибка регистрации', {
+          new Notification('Registration Error', {
             body: response.error.message.join('\n'),
           });
 
           document.getElementById('username').focus();
         } else {
-          new Notification('Регистрация успешна', {
-            body: 'Вы успешно зарегистрированы!',
+          new Notification('Registration Successful', {
+            body: 'You have been successfully registered!',
           });
 
           inputs.forEach((input) => {

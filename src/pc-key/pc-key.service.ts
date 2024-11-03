@@ -41,7 +41,6 @@ export class PcKeyService {
   async checkSecretKey() {
     const wmicUuid: string = await getWmicUUID();
     this.resetKeyCheck();
-    // const pcValidName = await this.checkPcValid(wmicUuid);
     const pcValidKey = this.configService.get<string>('secretKey');
     if (pcValidKey === wmicUuid) this.pcKeyChecked = true;
     return this.isKeyChecked();
