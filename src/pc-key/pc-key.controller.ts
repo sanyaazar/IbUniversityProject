@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Res } from '@nestjs/common';
 import { PcKeyService } from './pc-key.service';
 import { Response } from 'express';
-import { AddSecretKeyDTO, CheckSecretKeyDTO } from './dto';
+import { AddSecretKeyDTO } from './dto';
 
 @Controller('pc-key')
 export class PcKeyController {

@@ -78,8 +78,35 @@
         ipcRenderer.send('sign-up', userData);
       });
 
+      ipcRenderer.on('sign-up-response', (event, response) => {
+        document.activeElement.blur();
+
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach((input) => {
+          input.disabled = false;
+        });
+
+        if (response.error) {
+          new Notification('Ошибка регистрации', {
+            body: response.error.message.join('\n'),
+          });
+
+          document.getElementById('username').focus();
+        } else {
+          new Notification('Регистрация успешна', {
+            body: 'Вы успешно зарегистрированы!',
+          });
+
+          inputs.forEach((input) => {
+            input.value = '';
+          });
+
+          ipcRenderer.send('open-main-page');
+        }
+      });
+
       document.getElementById('backButton').addEventListener('click', () => {
-        ipcRenderer.send('open-main-page');
+        ipcRenderer.send('open-main-auth');
       });
     </script>
   </body>

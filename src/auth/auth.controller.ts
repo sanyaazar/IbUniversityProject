@@ -1,10 +1,9 @@
 // src/auth.controller.ts
 import { Controller, Get, Post, Body, Res } from '@nestjs/common';
 import { Response } from 'express';
-import { LoginDTO } from './dto/login-body.dto';
-
 import { AuthService } from './auth.service';
 import { PcKeyService } from 'src/pc-key/pc-key.service';
+import { LoginDTO, SignUpDTO } from './dto';
 
 @Controller('auth')
 export class AuthController {
@@ -48,6 +47,12 @@ export class AuthController {
   async login(@Body() body: LoginDTO, @Res() res: Response) {
     const response = await this.authService.login(body);
 
+    return res.json(response);
+  }
+
+  @Post('signup')
+  async signup(@Body() body: SignUpDTO, @Res() res: Response) {
+    const response = await this.authService.signup(body);
     return res.json(response);
   }
 }

@@ -69,7 +69,34 @@
       });
 
       document.getElementById('backButton').addEventListener('click', () => {
-        ipcRenderer.send('open-main-page');
+        ipcRenderer.send('open-main-auth');
+      });
+
+      ipcRenderer.on('login-response', (event, response) => {
+        document.activeElement.blur();
+
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach((input) => {
+          input.disabled = false;
+        });
+
+        if (response.error) {
+          new Notification('Ошибка входа', {
+            body: response.error.message.join('\n'),
+          });
+
+          document.getElementById('username').focus();
+        } else {
+          new Notification('Вход выполнено успешно', {
+            body: 'Вы вошли в систему!',
+          });
+
+          inputs.forEach((input) => {
+            input.value = '';
+          });
+
+          ipcRenderer.send('open-main-page');
+        }
       });
     </script>
   </body>

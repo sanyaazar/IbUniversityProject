@@ -24,7 +24,7 @@ model User {
   login String @unique
   password String
   name String
-  phoneNumber String
+  phoneNumber String @unique
   email String @unique
   address String
 }

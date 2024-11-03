@@ -3,8 +3,9 @@ import { SecretKey } from '@prisma/client';
 
 import { Hasher } from 'src/auth/hasher';
 import { PcKeyRepository } from 'src/database/pc-key.repository';
-import { AddSecretKeyDTO, CheckSecretKeyDTO } from './dto';
+import { AddSecretKeyDTO } from './dto';
 import { getWmicUUID } from 'getuuid';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class PcKeyService {
@@ -13,6 +14,7 @@ export class PcKeyService {
   constructor(
     private readonly pcKeyRepository: PcKeyRepository,
     private readonly hasher: Hasher,
+    private readonly configService: ConfigService,
   ) {}
 
   isKeyChecked(): boolean {
@@ -39,8 +41,9 @@ export class PcKeyService {
   async checkSecretKey() {
     const wmicUuid: string = await getWmicUUID();
     this.resetKeyCheck();
-    const pcValidName = await this.checkPcValid(wmicUuid);
-    if (pcValidName) this.pcKeyChecked = true;
+    // const pcValidName = await this.checkPcValid(wmicUuid);
+    const pcValidKey = this.configService.get<string>('secretKey');
+    if (pcValidKey === wmicUuid) this.pcKeyChecked = true;
     return this.isKeyChecked();
   }
 
