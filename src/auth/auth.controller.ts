@@ -57,7 +57,7 @@ export class AuthController {
         '..',
         'src',
         'html-pages',
-        'login.html',
+        'sign-up.html',
       );
       res.sendFile(filePath);
     } else {

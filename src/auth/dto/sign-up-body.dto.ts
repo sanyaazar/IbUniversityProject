@@ -32,7 +32,6 @@ export class SignUpDTO {
 
   @IsEmail()
   @IsNotEmpty()
-  @Length(50)
   email: string;
 
   @IsString()

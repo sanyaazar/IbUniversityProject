@@ -13,7 +13,6 @@ export class AppController {
       __dirname,
       '..',
       '..',
-      '..',
       'src',
       'html-pages',
       'main-window.html',

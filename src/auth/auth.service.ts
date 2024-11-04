@@ -42,19 +42,25 @@ export class AuthService {
     );
     if (!isValidPassword) {
       this.failedAttempts++;
+      if (this.failedAttempts >= 3) {
+        throw new TooManyAttemptsException();
+      }
       throw new UnauthorizedException({
         message: 'Invalid username or password',
         failedAttempts: this.failedAttempts,
       });
     }
+    this.resetFailedAttempts();
     return true;
   }
 
   async signup(body: SignUpDTO): Promise<boolean> {
     const isKeyChecked = this.pcKeyService.isKeyChecked();
     if (!isKeyChecked) return false;
-
     await this.checkUniqueFields(body);
+
+    const hashedPassword = await this.hasher.hash(body.password);
+    body.password = hashedPassword;
     const createdUser = await this.userRepository.createUser(body);
     return createdUser ? true : false;
   }
