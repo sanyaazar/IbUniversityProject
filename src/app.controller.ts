@@ -1,6 +1,7 @@
 import { Controller, Get, Res } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Response } from 'express';
+import * as path from 'path';
 
 @Controller()
 export class AppController {
@@ -8,8 +9,15 @@ export class AppController {
 
   @Get()
   getMainWindow(@Res() res: Response) {
-    res.sendFile(
-      'D:\\Универ\\university-ib-project\\src\\html-pages\\main-window.html',
+    const filePath = path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      'src',
+      'html-pages',
+      'main-window.html',
     );
+    res.sendFile(filePath);
   }
 }

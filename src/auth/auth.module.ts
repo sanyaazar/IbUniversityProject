@@ -10,5 +10,6 @@ import { UserRepository } from 'src/database/user.repository';
   imports: [PcKeyModule],
   controllers: [AuthController],
   providers: [AuthService, AuthRepository, Hasher, UserRepository],
+  exports: [AuthService],
 })
 export class AuthModule {}

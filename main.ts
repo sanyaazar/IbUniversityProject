@@ -67,6 +67,32 @@ ipcMain.on('open-sign-up', () => {
   mainWindow.loadURL('http://localhost:3000/auth/signup');
 });
 
+ipcMain.on('open-captcha-verification-page', () => {
+  const mainWindow = BrowserWindow.getAllWindows()[0];
+  mainWindow.loadURL('http://localhost:3000/captcha/page');
+});
+
+ipcMain.on('generate-captcha', async (event) => {
+  try {
+    const response = await axios.get('http://localhost:3000/captcha');
+    event.reply('captcha-generated', { image: response.data.image });
+  } catch (error) {
+    console.error('Ошибка при генерации CAPTCHA:', error);
+  }
+});
+
+ipcMain.on('verify-captcha', async (event, { text }) => {
+  try {
+    const response = await axios.post('http://localhost:3000/captcha/verify', {
+      userInput: text,
+    });
+    event.reply('captcha-verification', { isValid: response.data.isValid });
+  } catch (error) {
+    console.error('Ошибка при проверке CAPTCHA:', error);
+    event.reply('captcha-verification', { error: error.response.data });
+  }
+});
+
 ipcMain.on('sign-up', async (event, userData) => {
   try {
     const response = await axios.post(
@@ -91,11 +117,30 @@ ipcMain.on('login', async (event, userData) => {
     );
     event.reply('login-response', response.data);
   } catch (error) {
-    if (typeof error.response.data.message === 'string') {
-      error.response.data.message = [error.response.data.message];
+    if (error.response) {
+      const { status, data } = error.response;
+
+      if (status === 401) {
+        const failedAttempts = data.failedAttempts || 0;
+        const message =
+          data.message + `. There are ${3 - failedAttempts} attempts left`;
+        event.reply('login-response', {
+          error: {
+            message: [message],
+          },
+        });
+      } else if (status === 429) {
+        event.reply('load-captcha');
+      } else {
+        console.error(error.response);
+        event.reply('login-response', { error: data });
+      }
+    } else {
+      console.error('Ошибка при выполнении запроса:', error.message);
+      event.reply('login-response', {
+        error: { message: 'Неизвестная ошибка' },
+      });
     }
-    console.error(error.response);
-    event.reply('login-response', { error: error.response.data });
   }
 });
 

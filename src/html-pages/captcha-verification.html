@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Electron App - Sign In</title>
+    <title>Electron App - CAPTCHA Verification</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -58,66 +58,73 @@
         width: calc(100% - 22px);
         text-align: center;
       }
+      .captcha-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .captcha-image {
+        margin-right: 10px;
+      }
     </style>
   </head>
   <body>
-    <h1>Sign In</h1>
+    <h1>CAPTCHA Verification</h1>
     <div class="action-buttons">
       <div class="error-message" id="error-message"></div>
-      <input type="text" id="username" placeholder="Username" />
-      <input type="password" id="password" placeholder="Password" />
-      <button id="loginButton">Sign In</button>
-      <button id="backButton">Back</button>
+
+      <!-- CAPTCHA изображение и поле для ввода -->
+      <div class="captcha-container">
+        <img src="" alt="CAPTCHA" id="captchaImage" class="captcha-image" />
+        <button id="refreshCaptcha">Refresh</button>
+      </div>
+
+      <input type="text" id="captchaText" placeholder="Enter CAPTCHA" />
+
+      <button id="verifyButton">Verify</button>
     </div>
 
     <script>
       const { ipcRenderer } = require('electron');
 
-      document.getElementById('loginButton').addEventListener('click', () => {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        ipcRenderer.send('login', { username, password });
+      function loadCaptcha() {
+        ipcRenderer.send('generate-captcha');
+      }
+
+      document.getElementById('verifyButton').addEventListener('click', () => {
+        const captchaText = document.getElementById('captchaText').value;
+        ipcRenderer.send('verify-captcha', { text: captchaText });
       });
 
-      document.getElementById('backButton').addEventListener('click', () => {
-        ipcRenderer.send('open-main-auth');
+      document
+        .getElementById('refreshCaptcha')
+        .addEventListener('click', loadCaptcha);
+
+      ipcRenderer.on('captcha-generated', (event, captchaData) => {
+        const captchaImage = document.getElementById('captchaImage');
+        captchaImage.src =
+          'data:image/svg+xml;base64,' + btoa(captchaData.image);
+        document.getElementById('captchaText').value = '';
       });
 
-      ipcRenderer.on('load-captcha', (event, response) => {
-        ipcRenderer.send('open-captcha-verification-page');
-      });
-
-      ipcRenderer.on('login-response', (event, response) => {
+      ipcRenderer.on('captcha-verification', (event, response) => {
         const errorMessageDiv = document.getElementById('error-message');
 
-        errorMessageDiv.style.display = 'none';
-        errorMessageDiv.textContent = '';
-
-        document.activeElement.blur();
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach((input) => {
-          input.disabled = false;
-        });
-
         if (response.error) {
-          errorMessageDiv.textContent = response.error.message;
+          errorMessageDiv.textContent = 'Invalid CAPTCHA. Please try again.';
           errorMessageDiv.style.display = 'block';
-
-          document.getElementById('username').focus();
         } else {
           errorMessageDiv.style.display = 'none';
-
-          new Notification('Вход выполнено успешно', {
-            body: 'Вы вошли в систему!',
+          new Notification('Verification Successful', {
+            body: 'CAPTCHA verification passed!',
           });
 
-          inputs.forEach((input) => {
-            input.value = '';
-          });
-
-          ipcRenderer.send('open-main-page');
+          ipcRenderer.send('open-sign-in');
         }
       });
+
+      loadCaptcha();
     </script>
   </body>
 </html>

@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PcKeyModule } from './pc-key/pc-key.module';
 import { ConfigModule } from '@nestjs/config';
+import { CaptchaModule } from './captcha/captcha.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ConfigModule } from '@nestjs/config';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    CaptchaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

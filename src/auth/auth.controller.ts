@@ -4,6 +4,7 @@ import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { PcKeyService } from 'src/pc-key/pc-key.service';
 import { LoginDTO, SignUpDTO } from './dto';
+import * as path from 'path';
 
 @Controller('auth')
 export class AuthController {
@@ -14,19 +15,33 @@ export class AuthController {
 
   @Get()
   getAuthConfirmationPage(@Res() res: Response) {
-    res.sendFile(
-      'D:\\Универ\\university-ib-project\\src\\html-pages\\menu.html',
+    const filePath = path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      'src',
+      'html-pages',
+      'menu.html',
     );
+    res.sendFile(filePath);
   }
 
   @Get('login')
   async getLoginPage(@Res() res: Response) {
     const check = this.pcKeyService.isKeyChecked();
-    if (check)
-      res.sendFile(
-        'D:\\Универ\\university-ib-project\\src\\html-pages\\login.html',
+    if (check) {
+      const filePath = path.join(
+        __dirname,
+        '..',
+        '..',
+        '..',
+        'src',
+        'html-pages',
+        'login.html',
       );
-    else {
+      res.sendFile(filePath);
+    } else {
       res.sendStatus(401);
     }
   }
@@ -34,11 +49,18 @@ export class AuthController {
   @Get('signup')
   async getSignUpPage(@Res() res: Response) {
     const check = this.pcKeyService.isKeyChecked();
-    if (check)
-      res.sendFile(
-        'D:\\Универ\\university-ib-project\\src\\html-pages\\sign-up.html',
+    if (check) {
+      const filePath = path.join(
+        __dirname,
+        '..',
+        '..',
+        '..',
+        'src',
+        'html-pages',
+        'login.html',
       );
-    else {
+      res.sendFile(filePath);
+    } else {
       res.sendStatus(401);
     }
   }

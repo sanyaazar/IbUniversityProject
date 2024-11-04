@@ -8,6 +8,7 @@ import { AuthRepository } from 'src/database';
 import { PcKeyService } from 'src/pc-key/pc-key.service';
 import { LoginDTO, SignUpDTO } from './dto';
 import { UserRepository } from 'src/database/user.repository';
+import { TooManyAttemptsException } from './errors/TooManyAttemptsException';
 
 @Injectable()
 export class AuthService {
@@ -26,11 +27,25 @@ export class AuthService {
 
     const existedUser = await this.userRepository.getUserByLogin(body.username);
     if (!existedUser) {
-      throw new UnauthorizedException('Invalid username or password');
+      this.failedAttempts++;
+      if (this.failedAttempts >= 3) {
+        throw new TooManyAttemptsException();
+      }
+      throw new UnauthorizedException({
+        message: 'Invalid username or password',
+        failedAttempts: this.failedAttempts,
+      });
     }
-
-    if (!(body.password === existedUser.password)) {
-      throw new UnauthorizedException('Invalid username or password');
+    const isValidPassword = await this.hasher.compare(
+      body.password,
+      existedUser.password,
+    );
+    if (!isValidPassword) {
+      this.failedAttempts++;
+      throw new UnauthorizedException({
+        message: 'Invalid username or password',
+        failedAttempts: this.failedAttempts,
+      });
     }
     return true;
   }
@@ -73,5 +88,9 @@ export class AuthService {
 
   getFailedAttempts(): number {
     return this.failedAttempts;
+  }
+
+  resetFailedAttempts() {
+    this.failedAttempts = 0;
   }
 }
