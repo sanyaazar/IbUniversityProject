@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { RightType, User } from '@prisma/client';
 import { SignUpDTO } from 'src/auth/dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -47,5 +47,26 @@ export class UserRepository {
       },
     });
     return user || null;
+  }
+
+  async getUserRightsOnFile(
+    userId: string,
+    filename: string,
+  ): Promise<RightType | null> {
+    const fileRight = await this.prisma.fileRight.findFirst({
+      where: {
+        userId,
+        FileName: filename,
+      },
+      select: {
+        rights: {
+          select: {
+            right: true,
+          },
+        },
+      },
+    });
+
+    return fileRight?.rights?.right || null;
   }
 }

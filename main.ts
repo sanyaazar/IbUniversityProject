@@ -4,6 +4,8 @@ import axios from 'axios';
 
 let serverProcess: any;
 
+let currentUser: any;
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 800,
@@ -72,6 +74,27 @@ ipcMain.on('open-captcha-verification-page', () => {
   mainWindow.loadURL('http://localhost:3000/captcha/page');
 });
 
+ipcMain.on('open-editor-window', async () => {
+  const mainWindow = BrowserWindow.getAllWindows()[0];
+  mainWindow.loadURL('http://localhost:3000/editor/page');
+});
+
+ipcMain.on('get-user-rights-on-file', async (event, fileName) => {
+  try {
+    const response = await axios.post(
+      'http://localhost:3000/editor/user-rights',
+      {
+        username: currentUser.username,
+        filename: fileName,
+      },
+    );
+
+    event.reply('get-user-rights-on-file-response', response.data);
+  } catch (error) {
+    console.error('Ошибка при получении прав');
+  }
+});
+
 ipcMain.on('generate-captcha', async (event) => {
   try {
     const response = await axios.get('http://localhost:3000/captcha');
@@ -95,6 +118,8 @@ ipcMain.on('verify-captcha', async (event, { text }) => {
 
 ipcMain.on('sign-up', async (event, userData) => {
   try {
+    currentUser = { username: userData.login };
+
     const response = await axios.post(
       'http://localhost:3000/auth/signup',
       userData,
@@ -111,6 +136,8 @@ ipcMain.on('sign-up', async (event, userData) => {
 
 ipcMain.on('login', async (event, userData) => {
   try {
+    currentUser = { username: userData.username };
+
     const response = await axios.post(
       'http://localhost:3000/auth/login',
       userData,

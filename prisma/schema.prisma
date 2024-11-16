@@ -20,18 +20,37 @@ model SecretKey {
 }
 
 model User {
-  userId String @id @default(uuid()) @db.Uuid
-  login String @unique
-  password String
-  name String
-  phoneNumber String @unique
-  email String @unique
-  address String
+  userId    String    @id @default(uuid()) @db.Uuid
+  login     String    @unique
+  password  String
+  name      String
+  phoneNumber String  @unique
+  email     String    @unique
+  address   String
+
+  FileRights FileRight[]  // Связь с FileRight
 }
 
-model CaptchaImage {
-  id          Int      @id @default(autoincrement())
-  image       Bytes    
-  answer String
-  createdAt   DateTime @default(now())
+model FileRight {
+  FileName String
+  userId   String @db.Uuid  // userId теперь также имеет тип UUID
+  rightId  Int
+
+  rights Right @relation(fields: [rightId], references: [rightId]) // Связь с Right
+  user User @relation(fields: [userId], references: [userId]) // Связь с User
+
+  @@id([FileName, userId, rightId])
+}
+
+model Right {
+  rightId Int    @id @default(autoincrement())
+  right   RightType
+
+  FileRights FileRight[]  // Связь с FileRight
+}
+
+enum RightType {
+  READ
+  READ_COPY
+  READ_WRITE_COPY
 }

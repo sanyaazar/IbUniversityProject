@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { PcKeyModule } from './pc-key/pc-key.module';
 import { ConfigModule } from '@nestjs/config';
 import { CaptchaModule } from './captcha/captcha.module';
+import { EditorModule } from './editor/editor.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CaptchaModule } from './captcha/captcha.module';
       isGlobal: true,
     }),
     CaptchaModule,
+    EditorModule,
   ],
   controllers: [AppController],
   providers: [AppService],

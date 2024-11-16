@@ -75,6 +75,7 @@
           email: document.getElementById('email').value,
           address: document.getElementById('address').value,
         };
+        console.log(userData);
         ipcRenderer.send('sign-up', userData);
       });
 
@@ -101,7 +102,7 @@
             input.value = '';
           });
 
-          ipcRenderer.send('open-main-page');
+          ipcRenderer.send('open-editor-window');
         }
       });
 

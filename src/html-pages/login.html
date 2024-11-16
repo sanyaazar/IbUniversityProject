@@ -107,15 +107,15 @@
         } else {
           errorMessageDiv.style.display = 'none';
 
-          new Notification('Вход выполнено успешно', {
-            body: 'Вы вошли в систему!',
+          new Notification('Login Successful', {
+            body: 'You have logged into the system!',
           });
 
           inputs.forEach((input) => {
             input.value = '';
           });
 
-          ipcRenderer.send('open-main-page');
+          ipcRenderer.send('open-editor-window');
         }
       });
     </script>
