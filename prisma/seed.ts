@@ -4,6 +4,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   const rights = [
+    { rightId: 0, right: RightType.NONE },
     { rightId: 1, right: RightType.READ },
     { rightId: 2, right: RightType.READ_COPY },
     { rightId: 3, right: RightType.READ_WRITE_COPY },

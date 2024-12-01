@@ -83,6 +83,12 @@
         font-size: 14px;
         display: none;
       }
+
+      .access-denied {
+        color: red;
+        font-size: 18px;
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -97,6 +103,9 @@
       <button id="fileButton">Choose File</button>
       <button id="backButton" class="back-btn">Back</button>
       <p id="copyWarning" class="copy-warning">Copying is not allowed.</p>
+      <p id="accessDenied" class="access-denied">
+        Access denied: insufficient permissions.
+      </p>
     </div>
 
     <script>
@@ -114,67 +123,91 @@
       const fileInput = document.getElementById('fileInput');
       const buttonsContainer = document.querySelector('.buttons');
       const copyWarning = document.getElementById('copyWarning');
+      const accessDenied = document.getElementById('accessDenied');
 
       fileButton.addEventListener('click', function () {
         fileInput.click();
       });
 
-      fileInput.addEventListener('change', function () {
+      fileInput.addEventListener('change', async function () {
+        resetState();
+
         if (fileInput.files.length > 0) {
           const file = fileInput.files[0];
 
-          if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
-            const reader = new FileReader();
-
-            reader.onload = function (e) {
-              textEditor.value = e.target.result;
-              currentFilePath = file.name;
-              getAccessRights(currentFilePath);
-            };
-
-            reader.readAsText(file);
+          if (file.name.endsWith('.enc')) {
+            try {
+              const { content, rights, hashMismatch, error } =
+                await ipcRenderer.invoke('get-file-with-rights', file.name);
+              if (error) {
+                alert(
+                  'Warning: This file has been modified not from text editor!',
+                );
+                window.focus();
+                textEditor.focus();
+              } else {
+                textEditor.value = content;
+                accessRights = rights;
+                applyAccessRights(rights);
+                currentFilePath = file.name;
+                if (accessRights !== 'NONE' && hashMismatch) {
+                  alert(
+                    'Warning: This file has been modified since the last save!',
+                  );
+                  window.focus();
+                  textEditor.focus();
+                }
+              }
+            } catch (err) {
+              alert('Error loading file: ' + err.message);
+              textEditor.focus();
+            }
           } else {
-            alert('Please select a text file.');
+            alert('Please select a .enc file.');
+            textEditor.focus();
           }
         }
       });
 
-      function getAccessRights(filename) {
-        ipcRenderer.send('get-user-rights-on-file', filename);
-      }
-
-      ipcRenderer.on('get-user-rights-on-file-response', (event, response) => {
-        if (
-          !response ||
-          !['READ', 'READ_COPY', 'READ_WRITE_COPY'].includes(response)
-        ) {
-          accessRights = 'READ';
-        } else {
-          accessRights = response;
-        }
-        applyAccessRights();
-      });
-
       function applyAccessRights() {
-        if (accessRights === 'READ') {
+        if (accessRights === 'NONE') {
+          textEditor.readOnly = true;
+          buttonsContainer.style.display = 'none';
+          copyWarning.style.display = 'none';
+          accessDenied.style.display = 'block';
+        } else if (accessRights === 'READ') {
           textEditor.readOnly = true;
           buttonsContainer.style.display = 'none';
           textEditor.addEventListener('copy', preventCopy);
           copyWarning.style.display = 'block';
+          accessDenied.style.display = 'none';
         } else if (accessRights === 'READ_COPY') {
           textEditor.readOnly = true;
           buttonsContainer.style.display = 'none';
           textEditor.removeEventListener('copy', preventCopy);
           copyWarning.style.display = 'none';
+          accessDenied.style.display = 'none';
         } else if (accessRights === 'READ_WRITE_COPY') {
           textEditor.readOnly = false;
           buttonsContainer.style.display = 'flex';
           textEditor.removeEventListener('copy', preventCopy);
           copyWarning.style.display = 'none';
+          accessDenied.style.display = 'none';
+          saveButton.disabled = false;
+          cancelButton.disabled = false;
         }
+      }
 
-        saveButton.disabled = !currentFilePath;
-        cancelButton.disabled = !currentFilePath;
+      function loadFile() {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          textEditor.value = e.target.result;
+          currentFilePath = file.name;
+        };
+
+        reader.readAsText(file);
       }
 
       function preventCopy(e) {
@@ -183,30 +216,46 @@
         copyWarning.style.display = 'block';
       }
 
-      saveButton.addEventListener('click', () => {
-        if (currentFilePath) {
-          fs.writeFile(currentFilePath, textEditor.value, (err) => {
-            if (err) {
-              alert('Error saving the file: ' + err);
-            } else {
-              alert('File saved: ' + currentFilePath);
-            }
-          });
-        } else {
-          alert('No file selected.');
+      function resetState() {
+        textEditor.value = '';
+        textEditor.readOnly = true;
+        buttonsContainer.style.display = 'none';
+        copyWarning.style.display = 'none';
+        accessDenied.style.display = 'none';
+        accessRights = '';
+      }
+
+      saveButton.addEventListener('click', async () => {
+        try {
+          if (currentFilePath) {
+            // Отправляем запрос на шифрование данных
+            const encryptedContent = await ipcRenderer.invoke(
+              'encrypt-file',
+              textEditor.value,
+              currentFilePath,
+            );
+            alert('File saved and encrypted: ' + currentFilePath);
+          } else {
+            alert('No file selected.');
+          }
+        } catch (err) {
+          alert('Error saving or encrypting the file: ' + err.message);
         }
       });
 
       cancelButton.addEventListener('click', () => {
         textEditor.value = '';
-        textEditor.readOnly = true;
-        hideButtons();
+        buttonsContainer.style.display = 'none';
         currentFilePath = '';
         fileInput.value = '';
+        textEditor.readOnly = true;
+        copyWarning.style.display = 'none';
+        accessDenied.style.display = 'none';
       });
 
-      backButton.addEventListener('click', () => {
-        ipcRenderer.send('open-main-auth');
+      backButton.addEventListener('click', async () => {
+        await ipcRenderer.invoke('open-main-auth');
+        resetState();
       });
 
       function hideButtons() {

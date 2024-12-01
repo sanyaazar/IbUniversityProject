@@ -50,7 +50,14 @@ model Right {
 }
 
 enum RightType {
+  NONE
   READ
   READ_COPY
   READ_WRITE_COPY
+}
+
+model File {
+  fileId String    @id @default(uuid()) @db.Uuid
+  fileName String @unique
+  fileHash String
 }

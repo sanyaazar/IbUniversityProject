@@ -115,6 +115,10 @@
             input.value = '';
           });
 
+          inputs.forEach((input) => {
+            input.disabled = false;
+          });
+
           ipcRenderer.send('open-editor-window');
         }
       });

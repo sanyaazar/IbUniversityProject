@@ -7,6 +7,9 @@ import { PcKeyModule } from './pc-key/pc-key.module';
 import { ConfigModule } from '@nestjs/config';
 import { CaptchaModule } from './captcha/captcha.module';
 import { EditorModule } from './editor/editor.module';
+import { EncryptionService } from './editor/encryption.service';
+import { Hasher } from './auth/hasher';
+import { FileRepository } from './database/file.repository';
 
 @Module({
   imports: [
@@ -20,6 +23,6 @@ import { EditorModule } from './editor/editor.module';
     EditorModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, EncryptionService, Hasher, FileRepository],
 })
 export class AppModule {}

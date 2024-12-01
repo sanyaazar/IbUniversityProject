@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { exec, spawn } from 'child_process';
 import axios from 'axios';
+import { promises as fs } from 'fs';
 
 let serverProcess: any;
 
@@ -18,7 +19,7 @@ function createWindow() {
 
   setTimeout(() => {
     win.loadURL('http://localhost:3000/auth');
-  }, 1000);
+  }, 5000);
 
   win.on('closed', () => {
     console.log('Window closed. Closing the server.');
@@ -46,10 +47,11 @@ function closeServer() {
   });
 }
 
-ipcMain.on('open-main-auth', () => {
+ipcMain.handle('open-main-auth', async () => {
   const mainWindow = BrowserWindow.getAllWindows()[0];
   mainWindow.loadURL('http://localhost:3000/auth');
 });
+
 ipcMain.on('open-main-page', async () => {
   const mainWindow = BrowserWindow.getAllWindows()[0];
   try {
@@ -79,7 +81,7 @@ ipcMain.on('open-editor-window', async () => {
   mainWindow.loadURL('http://localhost:3000/editor/page');
 });
 
-ipcMain.on('get-user-rights-on-file', async (event, fileName) => {
+ipcMain.handle('get-user-rights-on-file', async (_event, fileName) => {
   try {
     const response = await axios.post(
       'http://localhost:3000/editor/user-rights',
@@ -88,10 +90,11 @@ ipcMain.on('get-user-rights-on-file', async (event, fileName) => {
         filename: fileName,
       },
     );
-
-    event.reply('get-user-rights-on-file-response', response.data);
+    console.log(response.data);
+    return response.data;
   } catch (error) {
-    console.error('Ошибка при получении прав');
+    console.error('Ошибка при получении прав', error);
+    return 'NONE';
   }
 });
 
@@ -101,6 +104,46 @@ ipcMain.on('generate-captcha', async (event) => {
     event.reply('captcha-generated', { image: response.data.image });
   } catch (error) {
     console.error('Ошибка при генерации CAPTCHA:', error);
+  }
+});
+
+ipcMain.handle('get-file-with-rights', async (_event, fileName) => {
+  try {
+    console.log('in get file get-file-with-rights');
+    console.log('filePath: ' + fileName);
+
+    // Отправляем единый запрос на сервер
+    const response = await axios.post('http://localhost:3000/editor/file', {
+      username: currentUser.username,
+      filename: fileName,
+    });
+
+    const { decryptedContent, rights, hashMismatch, error } = response.data;
+
+    console.log('Decrypted File:', decryptedContent);
+    console.log('Rights:', rights);
+
+    return {
+      content: decryptedContent,
+      rights: rights,
+      hashMismatch,
+      error,
+    };
+  } catch (error) {
+    console.error('Error retrieving file and rights:', error.message);
+    throw new Error('Failed to load file and rights');
+  }
+});
+
+ipcMain.handle('decrypt-file', async (_event, filePath) => {
+  try {
+    const response = await axios.post('http://localhost:3000/files/decrypt', {
+      filePath,
+    });
+    return response.data.decryptedContent;
+  } catch (error) {
+    console.error('Error during decryption:', error);
+    throw new Error('Decryption failed');
   }
 });
 
@@ -131,6 +174,20 @@ ipcMain.on('sign-up', async (event, userData) => {
     }
     console.error(error.response);
     event.reply('sign-up-response', { error: error.response.data });
+  }
+});
+
+ipcMain.handle('encrypt-file', async (_event, content, fileName) => {
+  try {
+    const response = await axios.post('http://localhost:3000/editor/encrypt', {
+      content,
+      fileName,
+      username: currentUser.username,
+    });
+    return response.data.encryptedContent;
+  } catch (error) {
+    console.error('Error during encryption:', error);
+    throw new Error('Encryption failed');
   }
 });
 
@@ -168,6 +225,15 @@ ipcMain.on('login', async (event, userData) => {
         error: { message: 'Неизвестная ошибка' },
       });
     }
+  }
+});
+
+ipcMain.handle('save-file', async (_event, filePath, content) => {
+  try {
+    await fs.writeFile(filePath, content, 'utf8');
+  } catch (error) {
+    console.error('Error saving the file:', error);
+    throw new Error('File save failed');
   }
 });
 
