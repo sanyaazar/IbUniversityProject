@@ -130,7 +130,7 @@
       });
 
       fileInput.addEventListener('change', async function () {
-        resetState();
+        await resetState();
 
         if (fileInput.files.length > 0) {
           const file = fileInput.files[0];
@@ -140,9 +140,7 @@
               const { content, rights, hashMismatch, error } =
                 await ipcRenderer.invoke('get-file-with-rights', file.name);
               if (error) {
-                alert(
-                  'Warning: This file has been modified not from text editor!',
-                );
+                alert(error.message);
                 window.focus();
                 textEditor.focus();
               } else {
@@ -216,7 +214,7 @@
         copyWarning.style.display = 'block';
       }
 
-      function resetState() {
+      async function resetState() {
         textEditor.value = '';
         textEditor.readOnly = true;
         buttonsContainer.style.display = 'none';
@@ -228,7 +226,7 @@
       saveButton.addEventListener('click', async () => {
         try {
           if (currentFilePath) {
-            // Отправляем запрос на шифрование данных
+            await ipcRenderer.invoke('close-file', currentFilePath);
             const encryptedContent = await ipcRenderer.invoke(
               'encrypt-file',
               textEditor.value,
@@ -241,9 +239,17 @@
         } catch (err) {
           alert('Error saving or encrypting the file: ' + err.message);
         }
+        textEditor.value = '';
+        buttonsContainer.style.display = 'none';
+        currentFilePath = '';
+        fileInput.value = '';
+        textEditor.readOnly = true;
+        copyWarning.style.display = 'none';
+        accessDenied.style.display = 'none';
       });
 
-      cancelButton.addEventListener('click', () => {
+      cancelButton.addEventListener('click', async () => {
+        await ipcRenderer.invoke('close-file', currentFilePath);
         textEditor.value = '';
         buttonsContainer.style.display = 'none';
         currentFilePath = '';
@@ -254,8 +260,9 @@
       });
 
       backButton.addEventListener('click', async () => {
+        await ipcRenderer.invoke('close-file', currentFilePath);
         await ipcRenderer.invoke('open-main-auth');
-        resetState();
+        await resetState();
       });
 
       function hideButtons() {

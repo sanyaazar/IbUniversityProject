@@ -6,6 +6,7 @@ import { EncryptionService } from './encryption.service';
 import * as fs from 'fs';
 import { Hasher } from 'src/auth/hasher';
 import { FileRepository } from 'src/database/file.repository';
+import * as path from 'path';
 
 @Injectable()
 export class EditorService {
@@ -16,6 +17,19 @@ export class EditorService {
     private readonly fileRepository: FileRepository,
   ) {}
 
+  async closeFile(filename: string) {
+    console.log('iasd asdas');
+    this.fileRepository.updateFileOpenStatus(filename, false);
+    const encryptedFilePath = path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      `${filename.split('.')[0]}.enc`,
+    );
+    this.encryptionService.unlockFile(encryptedFilePath);
+  }
+
   async getUserRightsOnFile(
     body: GetUserRightsOnFileDTO,
   ): Promise<GetFileWithRightsResponseDTO> {
@@ -25,7 +39,9 @@ export class EditorService {
 
     const user = await this.userRepository.getUserByLogin(body.username);
     const file = await this.fileRepository.getFile(body.filename);
-
+    if (file && file.fileOpen === true) {
+      throw new Error('File already open in another window');
+    }
     if (user) {
       userRights =
         (await this.userRepository.getUserRightsOnFile(
@@ -57,6 +73,10 @@ export class EditorService {
         modificationTime,
         hashedTime!,
       );
+
+      if (fileModifiedHash) {
+        await this.fileRepository.updateFileOpenStatus(body.filename, true);
+      }
     }
 
     return {

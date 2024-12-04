@@ -1,11 +1,9 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
-import { exec, spawn } from 'child_process';
+import { app, BrowserWindow, ipcMain, session } from 'electron';
 import axios from 'axios';
 import { promises as fs } from 'fs';
 
-let serverProcess: any;
-
 let currentUser: any;
+let filename: string;
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -28,23 +26,22 @@ function createWindow() {
 }
 
 function closeServer() {
-  if (global.nestServerInstance) {
-    global.nestServerInstance.close(() => {
-      console.log('NestJS сервер закрыт.');
-    });
-  }
-
-  exec('npx kill-port 3000', (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Ошибка при освобождении порта 3000: ${error.message}`);
-      return;
-    }
-    if (stderr) {
-      console.error(`Сообщение об ошибке: ${stderr}`);
-      return;
-    }
-    console.log(`Порт 3000 освобожден: ${stdout}`);
-  });
+  // if (global.nestServerInstance) {
+  //   global.nestServerInstance.close(() => {
+  //     console.log('NestJS сервер закрыт.');
+  //   });
+  // }
+  // exec('npx kill-port 3000', (error, stdout, stderr) => {
+  //   if (error) {
+  //     console.error(`Ошибка при освобождении порта 3000: ${error.message}`);
+  //     return;
+  //   }
+  //   if (stderr) {
+  //     console.error(`Сообщение об ошибке: ${stderr}`);
+  //     return;
+  //   }
+  //   console.log(`Порт 3000 освобожден: ${stdout}`);
+  // });
 }
 
 ipcMain.handle('open-main-auth', async () => {
@@ -83,6 +80,7 @@ ipcMain.on('open-editor-window', async () => {
 
 ipcMain.handle('get-user-rights-on-file', async (_event, fileName) => {
   try {
+    filename = fileName;
     const response = await axios.post(
       'http://localhost:3000/editor/user-rights',
       {
@@ -109,10 +107,7 @@ ipcMain.on('generate-captcha', async (event) => {
 
 ipcMain.handle('get-file-with-rights', async (_event, fileName) => {
   try {
-    console.log('in get file get-file-with-rights');
-    console.log('filePath: ' + fileName);
-
-    // Отправляем единый запрос на сервер
+    filename = fileName;
     const response = await axios.post('http://localhost:3000/editor/file', {
       username: currentUser.username,
       filename: fileName,
@@ -141,6 +136,18 @@ ipcMain.handle('decrypt-file', async (_event, filePath) => {
       filePath,
     });
     return response.data.decryptedContent;
+  } catch (error) {
+    console.error('Error during decryption:', error);
+    throw new Error('Decryption failed');
+  }
+});
+
+ipcMain.handle('close-file', async (_event, filePath) => {
+  try {
+    await axios.post('http://localhost:3000/editor/close-file', {
+      fileName: filePath,
+    });
+    return true;
   } catch (error) {
     console.error('Error during decryption:', error);
     throw new Error('Decryption failed');
@@ -238,20 +245,11 @@ ipcMain.handle('save-file', async (_event, filePath, content) => {
 });
 
 app.whenReady().then(() => {
-  serverProcess = spawn('npm', ['run', 'start'], { shell: true });
-
-  serverProcess.stdout.on('data', (data) => {
-    console.log(`NestJS: ${data}`);
+  session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
+    callback({ cancel: false });
   });
 
-  serverProcess.stderr.on('data', (data) => {
-    console.error(`NestJS error: ${data}`);
-  });
-
-  serverProcess.on('exit', (code) => {
-    console.log(`NestJS server exited with code ${code}`);
-    app.quit();
-  });
+  session.defaultSession.clearCache();
 
   setTimeout(() => {
     createWindow();
@@ -264,6 +262,10 @@ app.whenReady().then(() => {
   });
 });
 
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
+  console.log(filename);
+  await axios.post('http://localhost:3000/editor/close-file', {
+    fileName: filename,
+  });
   closeServer();
 });

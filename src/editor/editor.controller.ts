@@ -56,7 +56,13 @@ export class EditorController {
 
       return { message: 'File encrypted successfully', encryptedFilePath };
     } catch (error) {
-      throw new Error('Encryption failed: ' + error.message);
+      throw new Error('Encryption failed: ' + error);
     }
+  }
+
+  @Post('close-file')
+  async closeFile(@Body() body: { fileName: string }, @Res() res: Response) {
+    const response = await this.editorService.closeFile(body.fileName);
+    return res.json(response);
   }
 }

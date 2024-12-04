@@ -61,4 +61,15 @@ export class FileRepository {
       },
     });
   }
+
+  async updateFileOpenStatus(filename: string, status: boolean) {
+    await this.prisma.file.update({
+      where: {
+        fileName: filename,
+      },
+      data: {
+        fileOpen: status,
+      },
+    });
+  }
 }
