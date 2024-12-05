@@ -10,6 +10,7 @@ import { EditorModule } from './editor/editor.module';
 import { EncryptionService } from './editor/encryption.service';
 import { Hasher } from './auth/hasher';
 import { FileRepository } from './database/file.repository';
+import { UserRepository } from './database/user.repository';
 
 @Module({
   imports: [
@@ -23,6 +24,12 @@ import { FileRepository } from './database/file.repository';
     EditorModule,
   ],
   controllers: [AppController],
-  providers: [AppService, EncryptionService, Hasher, FileRepository],
+  providers: [
+    AppService,
+    EncryptionService,
+    Hasher,
+    FileRepository,
+    UserRepository,
+  ],
 })
 export class AppModule {}

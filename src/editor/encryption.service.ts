@@ -7,6 +7,7 @@ import { Hasher } from 'src/auth/hasher';
 import { FileRepository } from 'src/database/file.repository';
 import { exec } from 'child_process'; // Импорт для выполнения команд в консоли
 import * as os from 'os';
+import { UserRepository } from 'src/database/user.repository';
 
 @Injectable()
 export class EncryptionService {
@@ -18,6 +19,7 @@ export class EncryptionService {
     private readonly configService: ConfigService,
     private readonly hasher: Hasher,
     private readonly fileRepository: FileRepository,
+    private readonly userRepository: UserRepository,
   ) {
     this.encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
     if (!this.encryptionKey) {
@@ -36,22 +38,29 @@ export class EncryptionService {
         console.error(`Failed to lock file: ${stderr}`);
         return;
       }
-      console.log('File locked successfully for DefaultAccount.');
+      console.log(`File locked successfully for ${currentUsername}.`);
     });
   }
 
-  public unlockFile(filePath: string): void {
+  public unlockFile(filePath: string): boolean {
     const escapedFilePath = `"${filePath.replace(/\\/g, '\\\\')}"`; // Экранируем путь с двойными слэшами
     const currentUsername = os.userInfo().username;
     console.log(currentUsername);
-    const command = `icacls ${escapedFilePath} /grant "${currentUsername}:(F)"`;
+    const command = `icacls ${escapedFilePath} /inheritance:r /grant "${currentUsername}:(F)"`;
     exec(command, (err, stdout, stderr) => {
       if (err) {
         console.error(`Failed to unlock file: ${stderr}`);
-        return;
       }
       console.log('File unlocked successfully.');
     });
+    const command1 = `icacls ${escapedFilePath} /inheritance:r /grant "DefaultAccount:(F)"`;
+    exec(command1, (err, stdout, stderr) => {
+      if (err) {
+        console.error(`Failed to unlock file: ${stderr}`);
+      }
+      console.log('File unlocked successfully.');
+    });
+    return true;
   }
 
   /**
@@ -65,7 +74,14 @@ export class EncryptionService {
     content: string,
     username: string,
   ): Promise<string> {
-    const file = await this.fileRepository.getFile(fileName);
+    console.log(
+      'fileName:  ' +
+        fileName +
+        '  content  ' +
+        content +
+        '   username   ' +
+        username,
+    );
     const encryptedFilePath = path.join(
       __dirname,
       '..',
@@ -73,37 +89,43 @@ export class EncryptionService {
       '..',
       `${fileName.split('.')[0]}.enc`,
     );
-    this.unlockFile(encryptedFilePath);
+    if (this.unlockFile(encryptedFilePath)) {
+      let file = await this.fileRepository.getFile(fileName);
+      const user = await this.userRepository.getUserByLogin(username);
 
-    const iv = crypto.randomBytes(this.ivLength); // Генерация случайного вектора инициализации
-    const cipher = crypto.createCipheriv(
-      this.algorithm,
-      Buffer.from(this.encryptionKey!, 'hex'),
-      iv,
-    );
+      const iv = crypto.randomBytes(this.ivLength); // Генерация случайного вектора инициализации
+      const cipher = crypto.createCipheriv(
+        this.algorithm,
+        Buffer.from(this.encryptionKey!, 'hex'),
+        iv,
+      );
 
-    const encrypted = Buffer.concat([
-      cipher.update(content, 'utf8'),
-      cipher.final(),
-    ]);
+      const encrypted = Buffer.concat([
+        cipher.update(content, 'utf8'),
+        cipher.final(),
+      ]);
 
-    // Формируем путь к зашифрованному файлу
-    await fs.promises.writeFile(
-      encryptedFilePath,
-      Buffer.concat([iv, encrypted]),
-    );
+      // Формируем путь к зашифрованному файлу
+      await fs.promises.writeFile(
+        encryptedFilePath,
+        Buffer.concat([iv, encrypted]),
+      );
 
-    const fileStats = fs.statSync(fileName);
-    const modificationTime = fileStats.mtime.toISOString();
-    const hashedFileTime = await this.hasher.hash(modificationTime);
+      const fileStats = fs.statSync(fileName);
+      const modificationTime = fileStats.mtime.toISOString();
+      const hashedFileTime = await this.hasher.hash(modificationTime);
 
-    if (file) {
-      await this.fileRepository.updateFileTimeHash(fileName, hashedFileTime);
-    } else {
-      await this.fileRepository.setFileRights(username, fileName);
-      await this.fileRepository.addFile(fileName, hashedFileTime);
+      if (file) {
+        await this.fileRepository.updateFileTimeHash(fileName, hashedFileTime);
+        await this.fileRepository.updateFileOpenStatus(fileName, false);
+      } else {
+        await this.fileRepository.setFileRights(username, fileName);
+        await this.fileRepository.addFile(fileName, hashedFileTime);
+      }
+
+      file = await this.fileRepository.getFile(fileName);
+      await this.fileRepository.addSaveTimeFile(file!.fileId, user!.userId);
     }
-
     return encryptedFilePath;
   }
 

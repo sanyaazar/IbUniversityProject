@@ -137,7 +137,7 @@
 
           if (file.name.endsWith('.enc')) {
             try {
-              const { content, rights, hashMismatch, error } =
+              const { content, rights, hashMismatch, error, userMismatch } =
                 await ipcRenderer.invoke('get-file-with-rights', file.name);
               if (error) {
                 alert(error.message);
@@ -151,6 +151,12 @@
                 if (accessRights !== 'NONE' && hashMismatch) {
                   alert(
                     'Warning: This file has been modified since the last save!',
+                  );
+                  window.focus();
+                  textEditor.focus();
+                } else if (accessRights !== 'NONE' && userMismatch) {
+                  alert(
+                    'Warning: This file has been modified by another user!',
                   );
                   window.focus();
                   textEditor.focus();
@@ -260,7 +266,9 @@
       });
 
       backButton.addEventListener('click', async () => {
-        await ipcRenderer.invoke('close-file', currentFilePath);
+        if (currentFilePath) {
+          await ipcRenderer.invoke('close-file', currentFilePath);
+        }
         await ipcRenderer.invoke('open-main-auth');
         await resetState();
       });

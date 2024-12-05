@@ -62,3 +62,12 @@ model File {
   fileHash String
   fileOpen Boolean @default(false)
 }
+
+model FileHistory {
+  fileId String @db.Uuid
+  updatedDate DateTime @default(now())
+  userId String @db.Uuid
+  action String @default("read")
+
+  @@id([fileId, updatedDate])
+}

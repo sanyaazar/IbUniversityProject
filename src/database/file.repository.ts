@@ -72,4 +72,32 @@ export class FileRepository {
       },
     });
   }
+
+  async addSaveTimeFile(
+    fileId: string,
+    userId: string,
+    action: string = 'edit',
+  ) {
+    await this.prisma.fileHistory.create({
+      data: {
+        fileId,
+        userId,
+        action,
+      },
+    });
+  }
+
+  async getLastFileUser(fileId: string): Promise<string> {
+    const fileHistoryLine = await this.prisma.fileHistory.findFirst({
+      where: {
+        fileId,
+        action: 'edit',
+      },
+      orderBy: {
+        updatedDate: 'desc',
+      },
+    });
+
+    return fileHistoryLine!.userId;
+  }
 }

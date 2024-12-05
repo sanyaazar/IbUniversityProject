@@ -18,8 +18,10 @@ export class EditorService {
   ) {}
 
   async closeFile(filename: string) {
-    console.log('iasd asdas');
-    this.fileRepository.updateFileOpenStatus(filename, false);
+    const file = await this.fileRepository.getFile(filename);
+    if (file) {
+      this.fileRepository.updateFileOpenStatus(filename, false);
+    }
     const encryptedFilePath = path.join(
       __dirname,
       '..',
@@ -36,9 +38,11 @@ export class EditorService {
     let userRights: RightType = RightType.NONE;
     let decryptedContent = '';
     let fileModifiedHash;
+    let userMismatch;
 
     const user = await this.userRepository.getUserByLogin(body.username);
     const file = await this.fileRepository.getFile(body.filename);
+
     if (file && file.fileOpen === true) {
       throw new Error('File already open in another window');
     }
@@ -55,27 +59,37 @@ export class EditorService {
           decryptedContent,
           rights: RightType.READ_WRITE_COPY,
           hashMismatch: false,
+          userMismatch: false,
         };
       }
 
       if (userRights !== RightType.NONE) {
         decryptedContent = await this.decryptFile(body.filename);
-      }
+        await this.fileRepository.addSaveTimeFile(
+          file.fileId,
+          user.userId,
+          'read',
+        );
+        const fileStats = fs.statSync(body.filename);
+        const modificationTime = fileStats.mtime.toISOString();
 
-      const fileStats = fs.statSync(body.filename);
-      const modificationTime = fileStats.mtime.toISOString();
+        const hashedTime = await this.fileRepository.getFileTimeHash(
+          body.filename,
+        );
 
-      const hashedTime = await this.fileRepository.getFileTimeHash(
-        body.filename,
-      );
+        fileModifiedHash = await this.hasher.compare(
+          modificationTime,
+          hashedTime!,
+        );
 
-      fileModifiedHash = await this.hasher.compare(
-        modificationTime,
-        hashedTime!,
-      );
+        if (fileModifiedHash) {
+          await this.fileRepository.updateFileOpenStatus(body.filename, true);
+        }
 
-      if (fileModifiedHash) {
-        await this.fileRepository.updateFileOpenStatus(body.filename, true);
+        const lastUserId = await this.fileRepository.getLastFileUser(
+          file.fileId,
+        );
+        userMismatch = lastUserId === user.userId;
       }
     }
 
@@ -83,6 +97,7 @@ export class EditorService {
       decryptedContent,
       rights: userRights,
       hashMismatch: !fileModifiedHash,
+      userMismatch: !userMismatch,
     };
   }
 

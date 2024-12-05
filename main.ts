@@ -113,7 +113,8 @@ ipcMain.handle('get-file-with-rights', async (_event, fileName) => {
       filename: fileName,
     });
 
-    const { decryptedContent, rights, hashMismatch, error } = response.data;
+    const { decryptedContent, rights, hashMismatch, error, userMismatch } =
+      response.data;
 
     console.log('Decrypted File:', decryptedContent);
     console.log('Rights:', rights);
@@ -122,6 +123,7 @@ ipcMain.handle('get-file-with-rights', async (_event, fileName) => {
       content: decryptedContent,
       rights: rights,
       hashMismatch,
+      userMismatch,
       error,
     };
   } catch (error) {
