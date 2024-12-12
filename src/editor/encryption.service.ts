@@ -45,7 +45,6 @@ export class EncryptionService {
   public unlockFile(filePath: string): boolean {
     const escapedFilePath = `"${filePath.replace(/\\/g, '\\\\')}"`; // Экранируем путь с двойными слэшами
     const currentUsername = os.userInfo().username;
-    console.log(currentUsername);
     const command = `icacls ${escapedFilePath} /inheritance:r /grant "${currentUsername}:(F)"`;
     exec(command, (err, stdout, stderr) => {
       if (err) {
@@ -55,6 +54,40 @@ export class EncryptionService {
     });
     const command1 = `icacls ${escapedFilePath} /inheritance:r /grant "DefaultAccount:(F)"`;
     exec(command1, (err, stdout, stderr) => {
+      if (err) {
+        console.error(`Failed to unlock file: ${stderr}`);
+      }
+      console.log('File unlocked successfully.');
+    });
+    exec(command, (err, stdout, stderr) => {
+      if (err) {
+        console.error(`Failed to unlock file: ${stderr}`);
+      }
+      console.log('File unlocked successfully.');
+    });
+    const command2 = `icacls ${escapedFilePath} /inheritance:r /grant "Гость:(F)"`;
+    exec(command2, (err, stdout, stderr) => {
+      if (err) {
+        console.error(`Failed to unlock file: ${stderr}`);
+      }
+      console.log('File unlocked successfully.');
+    });
+    const command3 = `icacls ${escapedFilePath} /inheritance:r /grant "Администратор:(F)"`;
+    exec(command3, (err, stdout, stderr) => {
+      if (err) {
+        console.error(`Failed to unlock file: ${stderr}`);
+      }
+      console.log('File unlocked successfully.');
+    });
+    const command4 = `icacls ${escapedFilePath} /inheritance:r /grant "postgres:(F)"`;
+    exec(command4, (err, stdout, stderr) => {
+      if (err) {
+        console.error(`Failed to unlock file: ${stderr}`);
+      }
+      console.log('File unlocked successfully.');
+    });
+    const command5 = `icacls ${escapedFilePath} /inheritance:r /grant "WDAGUtilityAccount:(F)"`;
+    exec(command5, (err, stdout, stderr) => {
       if (err) {
         console.error(`Failed to unlock file: ${stderr}`);
       }
